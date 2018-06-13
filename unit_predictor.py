@@ -183,7 +183,7 @@ class UnitVariationalAutoencoderOnsets(UnitPredictor):
         # Get binarized onsets
         input_pianoroll = np.pad(input_pianoroll, ((0,0),(1,0)), 'constant')
         input_pianoroll = input_pianoroll[:,1:] - input_pianoroll[:,:-1]
-        input_pianoroll = (input_pianoroll > 0.1).astype('float32')
+        input_pianoroll = (input_pianoroll > 0.1).astype('float16')
         # Crop / reshape to suit model
         input_pianoroll = pianoroll_utils.crop_pianoroll(input_pianoroll, self.MIN_PITCH, self.MAX_PITCH)
         input_pianoroll = input_pianoroll.reshape(1, self.NUM_PITCHES, self.NUM_TICKS, 1)
