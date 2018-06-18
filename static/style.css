@@ -1,0 +1,29 @@
+body {
+    background-color: rgb(10, 10, 10);
+    color: white;
+    margin: 0;
+}
+
+p {
+    margin: 0px;
+}
+.consoletext {
+    padding-top: 0.1em;
+}
+
+#p5_container {
+    height: 50%;
+}
+
+#checkbox_container {
+    position: absolute;
+}
+
+#console_container {
+    height: 50%;
+    overflow-y: scroll;
+}
+
+#console {
+    padding: 20px;
+}
