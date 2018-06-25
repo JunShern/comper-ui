@@ -10,10 +10,10 @@ def callback():
 def all_subclasses(cls):
     return cls.__subclasses__() + [g for s in cls.__subclasses__() for g in all_subclasses(s)]
 
-# GUI
-tk = tkinter.Tk()
-btn = tkinter.Button(tk, text="Quit", command=callback)
-btn.pack()
+# # GUI
+# tk = tkinter.Tk()
+# btn = tkinter.Button(tk, text="Quit", command=callback)
+# btn.pack()
 
 done = False # Composer loop
 if __name__ == "__main__":
@@ -33,5 +33,5 @@ if __name__ == "__main__":
         # Run comping
         while not done:
             comp.generate_comp(outport)
-            tk.update_idletasks()
-            tk.update()
+            # tk.update_idletasks()
+            # tk.update()
