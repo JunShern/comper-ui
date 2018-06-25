@@ -465,6 +465,7 @@ class UnitAccompanier(UnitLooper):
             - Drums https://commons.wikimedia.org/wiki/File:GMStandardDrumMap.gif
         2. Plays back the generated accompaniment
         """
+        print('Unit', self.rec_count)
         # Empty the input
         self.input_pianoroll = np.zeros((self.num_pitches, self.num_ticks))
         self.input_events = [[] for _ in range(self.num_ticks)] # Each tick gets a list to store events
@@ -489,3 +490,17 @@ class UnitAccompanier(UnitLooper):
         # Predict comp events for the next unit
         self.comp_pianoroll = self.unit_predictor.get_comp_pianoroll(self.input_pianoroll)
         self.comp_events = pianoroll_utils.pianoroll_2_events(self.comp_pianoroll)
+
+        np.save('/tmp/mono_recorded_pianoroll_{}.npy'.format(self.rec_count), self.input_pianoroll)
+        np.save('/tmp/mono_generated_pianoroll_{}.npy'.format(self.rec_count), self.comp_pianoroll)
+        self.rec_count += 1
+
+class UnitAccompanierMono(UnitAccompanier):
+    """
+    Predicts a next-state accompaniment unit based on 
+    previous input and accompaniment units.
+    The accompaniment will be a monophonic bassline.
+    """
+    def __init__(self):
+        UnitAccompanier.__init__(self)
+        self.unit_predictor = unit_predictor.UnitAccompanierMono()

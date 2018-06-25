@@ -259,3 +259,90 @@ class UnitAccompanier(UnitPredictor):
         self.x_comp_embed = np.concatenate([self.x_comp_embed[1:], next_comp_embed], axis=0)
         assert(self.x_comp_embed.shape == (self.WINDOW_LENGTH, 10))
         return output_pianoroll
+
+class UnitAccompanierMono(UnitPredictor):
+    def __init__(self):
+        UnitPredictor.__init__(self)
+        # Music shape
+        self.MIN_PITCH = 13 # C-2 (MIDI 13)
+        self.MAX_PITCH = 108 # C7 (MIDI 108)
+        self.NUM_PITCHES = self.MAX_PITCH - self.MIN_PITCH + 1
+        # Load up all our Keras models
+        ENCODER_MODEL_FILE = './models/end2end_RNNdecoder_v1_encoder.h5'
+        DECODER_MODEL_FILE = './models/end2end_RNNdecoder_v1_decoder.h5'
+        self.encoder = keras.models.load_model(ENCODER_MODEL_FILE)
+        self.decoder = keras.models.load_model(DECODER_MODEL_FILE)
+        # Prepare the fixed memory
+        self.WINDOW_LENGTH = 4
+        self.x_input = np.zeros((self.WINDOW_LENGTH, self.NUM_PITCHES, self.NUM_TICKS, 1))
+        self.x_comp = np.zeros((self.WINDOW_LENGTH, self.NUM_PITCHES, self.NUM_TICKS, 1))
+        return
+
+    def get_comp_pianoroll(self, input_pianoroll):
+        """
+        Given a input pianoroll with shape [NUM_PITCHES, NUM_TICKS],
+        return an accompanying pianoroll with equivalent shape.
+        """
+        # Resize input_pianoroll from 128 to 96 keys
+        input_pianoroll = pianoroll_utils.crop_pianoroll(input_pianoroll, self.MIN_PITCH, self.MAX_PITCH)
+
+        # Get encoding of the input
+        input_pianoroll = input_pianoroll[np.newaxis, ..., np.newaxis]
+        assert(input_pianoroll.shape == (1, self.NUM_PITCHES, self.NUM_TICKS, 1))
+        # Append new input to past-inputs window
+        self.x_input = np.concatenate([self.x_input[1:], input_pianoroll], axis=0)
+        assert(self.x_input.shape == (self.WINDOW_LENGTH, self.NUM_PITCHES, self.NUM_TICKS, 1))
+        
+        # Get prediction of next comp embedding
+        next_comp = self.decode_sequence([np.array([self.x_input]), np.array([self.x_comp]) ])
+        assert(next_comp.shape == (self.NUM_PITCHES, self.NUM_TICKS))
+        
+        # Pad the pianoroll to 128 keys
+        output_pianoroll = pianoroll_utils.pad_pianoroll(next_comp, self.MIN_PITCH, self.MAX_PITCH)
+
+        # Append new comp to past-comps window
+        next_comp = next_comp[np.newaxis, ..., np.newaxis]
+        self.x_comp = np.concatenate([self.x_comp[1:], next_comp], axis=0)
+        assert(self.x_comp.shape == (self.WINDOW_LENGTH, self.NUM_PITCHES, self.NUM_TICKS, 1))
+        return output_pianoroll
+
+    def decode_sequence(self, input_seq_pair):
+        num_decoder_tokens = self.NUM_PITCHES
+        
+        # Encode the input as state vectors.
+        states_value = self.encoder.predict(input_seq_pair)
+
+        # Generate empty target sequence of length 1.
+        target_seq = np.zeros((1, 1, num_decoder_tokens))
+
+        # Populate the first character of target sequence with the start token.
+        start_token = np.zeros(num_decoder_tokens)
+        start_token[-1] = 1 # Start token is [...,0,0,0,1]
+        target_seq[0, 0, :] = start_token
+
+        # Sampling loop for a batch of sequences
+        # (to simplify, here we assume a batch of size 1).
+        output_onehotmatrix = np.zeros((self.NUM_TICKS, num_decoder_tokens))
+        output_onehotmatrix[0] = start_token
+        for i in range(1,self.NUM_TICKS):
+            output_tokens, h, c = self.decoder.predict(
+                [target_seq] + states_value)
+
+            # Sample a token
+            sampled_token_index = np.argmax(output_tokens[0, -1, :])
+            sampled_token = np.zeros(num_decoder_tokens)
+            sampled_token[sampled_token_index] = 1 # One hot encoding
+            # Write to output
+            output_onehotmatrix[i] = sampled_token
+
+            # Update the target sequence (of length 1).
+            target_seq = np.zeros((1, 1, num_decoder_tokens))
+            target_seq[0, 0, sampled_token_index] = 1.
+
+            # Update states
+            states_value = [h, c]
+
+        assert np.all(np.sum(output_onehotmatrix, axis=1) == 1) # Each tick is a one-hot encoded vector
+        output_pianoroll = pianoroll_utils.one_hot_to_pianoroll(output_onehotmatrix) 
+        assert output_pianoroll.shape == (self.NUM_PITCHES, self.NUM_TICKS)
+        return output_pianoroll
