@@ -170,9 +170,13 @@ class UnitVariationalAutoencoderOnsets(UnitPredictor):
         self.encoder = keras.models.load_model(ENCODER_MODEL_FILE,
             custom_objects={'latent_dim': latent_dim, 
                             'epsilon_std': epsilon_std})
+        self.encoder._make_predict_function()
+        # https://github.com/keras-team/keras/issues/6462
         self.decoder = keras.models.load_model(DECODER_MODEL_FILE,
             custom_objects={'latent_dim': latent_dim, 
                             'epsilon_std': epsilon_std})
+        self.decoder._make_predict_function()
+        # https://github.com/keras-team/keras/issues/6462
         return
     
     def get_comp_pianoroll(self, input_pianoroll):
@@ -180,6 +184,10 @@ class UnitVariationalAutoencoderOnsets(UnitPredictor):
         Given a input pianoroll with shape [NUM_PITCHES, NUM_TICKS],
         return an accompanying pianoroll with equivalent shape.
         """
+        assert input_pianoroll.shape[0] == 128
+        assert input_pianoroll.shape[1] == 96
+        assert np.max(input_pianoroll) <= 1.0
+
         # Get binarized onsets
         input_pianoroll = np.pad(input_pianoroll, ((0,0),(1,0)), 'constant')
         input_pianoroll = input_pianoroll[:,1:] - input_pianoroll[:,:-1]

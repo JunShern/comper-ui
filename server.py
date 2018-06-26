@@ -38,7 +38,7 @@ def get_comp_pianoroll():
     data = request.get_json(force=True)
     input_pianoroll = jsonevents_2_pianoroll(data)
     # Predict comp pianoroll
-    comp_pianoroll = input_pianoroll.copy()
+    comp_pianoroll = unit_predictor.get_comp_pianoroll(input_pianoroll) #input_pianoroll.copy()
     # Format data for JSON
     comp_events = pianoroll_2_jsonevents(comp_pianoroll)
     return json.dumps(comp_events)
@@ -83,5 +83,5 @@ def pianoroll_2_jsonevents(pianoroll, min_pitch=0, max_pitch=127, is_onsets_matr
 
 if __name__ == '__main__':
     # run!
-    # unit_predictor = unit_predictor.UnitVariationalAutoencoderOnsets()
+    unit_predictor = unit_predictor.UnitVariationalAutoencoderOnsets()
     app.run(debug=True)
