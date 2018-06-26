@@ -112,12 +112,6 @@ var p5sketch = function( p ) {
         }
 
         loopStatus = 1 - loopStatus;
-
-        // // Add a particle to visualize the note
-        // var pitchClassIndex = pentatonic_scale.indexOf(pitchClass);
-        // var xpos = width / (pentatonic_scale.length * 2) + pitchClassIndex * width / pentatonic_scale.length;
-        // var ypos = height - heightLevel * height / numOctaves;
-        // system.addParticle(xpos, ypos);
     }
 
     p.mouseClicked = function() {
@@ -257,6 +251,25 @@ var p5sketch = function( p ) {
             inputEventsList[tick].push(msg);
         }
     }
+
+    // function drawPianoroll(pianoroll) {
+    //     NUM_PITCHES = pianoroll.length;
+    //     NUM_TICKS = pianoroll[0].length;
+    //     pianoroll_width = p.width/3;
+    //     pianoroll_height = p.height;
+    //     var grid_w = pianoroll_width / NUM_TICKS;
+    //     var grid_h = pianoroll_height / NUM_PITCHES;
+
+    //     p.noStroke();
+    //     for (var pitch=0; pitch<NUM_PITCHES; pitch++) {
+    //         for (var tick=0; tick<NUM_TICKS; tick++) {
+    //             if (pianoroll[pitch][tick] !== 0) {
+    //                 p.fill(255, 0, 0, pianoroll[pitch][tick] * 255);
+    //                 p.rect(tick*grid_w, pianoroll_height - pitch*grid_h, grid_w, grid_h);    
+    //             }
+    //         }
+    //     }
+    // }
 };
 
 function createArray(length) {

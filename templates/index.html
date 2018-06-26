@@ -1,75 +1,40 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> -->
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='lodash.js') }}"></script>    
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='p5.js') }}"></script>
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='p5.sound.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='Tone.min.js') }}"></script>
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='sketch.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 <script>
-
-var midiAccess;
-var myp5;
-
 window.addEventListener("load", function(){ //when page loads
-    myp5 = new p5(p5sketch, "p5_container");
-
-    // request MIDI access
-    if (navigator.requestMIDIAccess) {
-        navigator.requestMIDIAccess({
-            sysex: false
-        }).then(onMIDISuccess, onMIDIFailure);
-    } else {
-        alert("No MIDI support in your browser.");
-    }
+    var myp5 = new p5(p5sketch, "p5_container");
 });
-
-function onMIDISuccess(midiAccess_) {
-    midiAccess = midiAccess_
-    var inputs = midiAccess.inputs.values();
-    for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-        // Create a checkbox for each available port
-        var checkbox = document.createElement('input');
-        checkbox.type = "checkbox";
-        checkbox.name = "midi_input_checkbox";
-        checkbox.value = input.value.name;
-        checkbox.id = input.value.name;
-        checkbox.addEventListener("change", function() {
-            var inputs = midiAccess.inputs.values();
-            for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-                // Assign callback function to the selected MIDI input(s)
-                cb = document.getElementById(input.value.name);
-                input.value.onmidimessage = cb.checked ? onMIDIMessage : null;
-            }
-        });
-
-        // Create label for that checkbox
-        var label = document.createElement('label')
-        label.htmlFor = input.value.name;
-        label.appendChild(document.createTextNode(input.value.name));
-
-        // Place checkbox in the right divs
-        var container = document.getElementById('checkbox_container');
-        var div = document.createElement('div');
-        div.appendChild(checkbox);
-        div.appendChild(label);
-        container.appendChild(div);
-    }
-}
-
-function onMIDIFailure(e) {
-    // when we get a failed response, run this code
-    console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
-}
-
 </script>
 </head>
 
 <body>
     <div id="checkbox_container"></div>
-    <div id="p5_container"></div>
+    <div id="radio_container">
+        <input type="radio" id="radio1" name="comp_mode" value="call_and_response" checked>
+        <label for="radio1">Call-and-Response</label>
+    </br>
+    
+        <input type="radio" id="radio2" name="comp_mode" value="accompaniment">
+        <label for="radio2">Accompaniment</label>
+    </div>
+    <div id="main_container">
+        <div id="p5_container"></div>
+        <div id="console_container">
+            <div id="console">
+                <p>Plug in a MIDI device and make some music!</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
