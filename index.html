@@ -1,0 +1,42 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="libraries/lodash.js"></script>    
+    <script language="javascript" type="text/javascript" src="libraries/p5.js"></script>
+    <!-- uncomment lines below to include extra p5 libraries -->
+    <!-- <script language="javascript" src="libraries/p5.dom.js"></script> -->
+    <script language="javascript" src="libraries/p5.sound.min.js"></script>
+    <script src="libraries/jquery-3.3.1.slim.min.js"></script>
+    <script src="libraries/Tone.min.js"></script>
+    <script language="javascript" type="text/javascript" src="sketch.js"></script>
+    <!-- this line removes any default padding and style. you might only need one of these values set. -->
+    <link rel="stylesheet" href="style.css">
+    <script>
+
+    window.addEventListener("load", function(){ //when page loads
+        var myp5 = new p5(p5sketch, "p5_container");
+    });
+
+    </script>
+</head>
+
+<body>
+    <div id="checkbox_container"></div>
+    <div id="radio_container">
+        <input type="radio" id="radio1" name="comp_mode" value="call_and_response" checked>
+        <label for="radio1">Call-and-Response</label>
+    </br>
+    
+        <input type="radio" id="radio2" name="comp_mode" value="accompaniment">
+        <label for="radio2">Accompaniment</label>
+    </div>
+    <div id="main_container">
+        <div id="p5_container"></div>
+        <div id="console_container">
+            <div id="console">
+                <p>Plug in a MIDI device and make some music!</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
