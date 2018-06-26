@@ -12,7 +12,8 @@ var p5sketch = function( p ) {
     var cycleStartACtime;
     var ticksPerBeat = 24, beatsPerUnit = 4;
     var secsPerTick;
-    var inputEventsList = createArray(128, 0);
+    var inputEventsList = createArray(96, 0);
+    var compEventsList = createArray(96, 0);
     var loopStatus = 0;
 
     function Key(index, key_w, key_h) {
@@ -90,11 +91,9 @@ var p5sketch = function( p ) {
 
         compMode = $("input[name=comp_mode]:checked").val();
         if (loopStatus == 1) {
-            compEventsList = inputEventsList.slice() // Make a copy
             for (var tick=0; tick<compEventsList.length; tick++) {
                 for (var msg_ind=0; msg_ind<compEventsList[tick].length; msg_ind++) {
                     var msg = compEventsList[tick][msg_ind];
-                    msg.channel = 6;
                     var startTime = tick*secsPerTick;
                     setTimeout(displayNewMessage, startTime*1000, msg);
                     if (msg.type === NOTE_ON) {
@@ -106,7 +105,7 @@ var p5sketch = function( p ) {
             }
             recordStatusColor = [0, 0, 20];
         } else if (loopStatus == 0) {
-            inputEventsList = createArray(128, 0); // Reset the input
+            inputEventsList = createArray(96, 0); // Reset the input
             recordStatusColor = [0, 70, 80];
         }
 
@@ -223,6 +222,12 @@ var p5sketch = function( p ) {
     }
 
     function displayNewMessage(msg) {
+        msg.toString = function() {
+            return 'type=' + msg.type + 
+                ' channel=' + msg.channel + 
+                ' note=' + msg.note + 
+                ' velocity=' + Math.round(msg.velocity * 100) / 100;;
+        }
         keys[msg.note].type = msg.type;
         keys[msg.note].channel = msg.channel;
         keys[msg.note].velocity = msg.velocity;
@@ -231,44 +236,29 @@ var p5sketch = function( p ) {
 
     function onMIDIMessage(data) {
         msg = new MIDI_Message(data.data);
-        msg.velocity = Math.round(msg.velocity / 127 * 100) / 100;
+        msg.velocity = msg.velocity / 127;
         displayNewMessage(msg);
-        // keys[msg.note].type = msg.type;
-        // keys[msg.note].channel = msg.channel;
-        // keys[msg.note].velocity = msg.velocity;
-        // write_to_console(msg.toString(), channel_colours[msg.channel]);
         if (msg.type === NOTE_ON) {
             synth.triggerAttack(p.midiToFreq(msg.note), undefined, msg.velocity);
         } else if (msg.type === NOTE_OFF) {
             synth.triggerRelease(p.midiToFreq(msg.note));
         }
-
         // Register in input events list if loop has started
         if (cycleStartACtime) {
             timeFromUnitStart = audioContext.currentTime - cycleStartACtime;
             tick = Math.floor(timeFromUnitStart / secsPerTick);   
             inputEventsList[tick].push(msg);
+            // Update the comp prediction
+            getCompFromServer(inputEventsList);
         }
     }
 
-    // function drawPianoroll(pianoroll) {
-    //     NUM_PITCHES = pianoroll.length;
-    //     NUM_TICKS = pianoroll[0].length;
-    //     pianoroll_width = p.width/3;
-    //     pianoroll_height = p.height;
-    //     var grid_w = pianoroll_width / NUM_TICKS;
-    //     var grid_h = pianoroll_height / NUM_PITCHES;
-
-    //     p.noStroke();
-    //     for (var pitch=0; pitch<NUM_PITCHES; pitch++) {
-    //         for (var tick=0; tick<NUM_TICKS; tick++) {
-    //             if (pianoroll[pitch][tick] !== 0) {
-    //                 p.fill(255, 0, 0, pianoroll[pitch][tick] * 255);
-    //                 p.rect(tick*grid_w, pianoroll_height - pitch*grid_h, grid_w, grid_h);    
-    //             }
-    //         }
-    //     }
-    // }
+    function getCompFromServer(inputEvents) {
+        // ajax the JSON to the server
+        $.post("/comp_endpoint", JSON.stringify(inputEventsList), function(data) {
+            compEventsList = JSON.parse(data);
+        });
+    }
 };
 
 function createArray(length) {
@@ -282,3 +272,23 @@ function createArray(length) {
 
     return arr;
 }
+
+
+// function drawPianoroll(pianoroll) {
+//     NUM_PITCHES = pianoroll.length;
+//     NUM_TICKS = pianoroll[0].length;
+//     pianoroll_width = p.width/3;
+//     pianoroll_height = p.height;
+//     var grid_w = pianoroll_width / NUM_TICKS;
+//     var grid_h = pianoroll_height / NUM_PITCHES;
+
+//     p.noStroke();
+//     for (var pitch=0; pitch<NUM_PITCHES; pitch++) {
+//         for (var tick=0; tick<NUM_TICKS; tick++) {
+//             if (pianoroll[pitch][tick] !== 0) {
+//                 p.fill(255, 0, 0, pianoroll[pitch][tick] * 255);
+//                 p.rect(tick*grid_w, pianoroll_height - pitch*grid_h, grid_w, grid_h);    
+//             }
+//         }
+//     }
+// }
