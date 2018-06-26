@@ -279,7 +279,9 @@ class UnitAccompanierMono(UnitPredictor):
         ENCODER_MODEL_FILE = './models/end2end_RNNdecoder_v1_encoder.h5'
         DECODER_MODEL_FILE = './models/end2end_RNNdecoder_v1_decoder.h5'
         self.encoder = keras.models.load_model(ENCODER_MODEL_FILE)
+        self.encoder._make_predict_function() # https://github.com/keras-team/keras/issues/6462
         self.decoder = keras.models.load_model(DECODER_MODEL_FILE)
+        self.decoder._make_predict_function() # https://github.com/keras-team/keras/issues/6462
         # Prepare the fixed memory
         self.WINDOW_LENGTH = 4
         self.x_input = np.zeros((self.WINDOW_LENGTH, self.NUM_PITCHES, self.NUM_TICKS, 1))

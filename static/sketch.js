@@ -44,7 +44,8 @@ var p5sketch = function( p ) {
     }
 
     p.setup = function() {
-        p.createCanvas(p.windowWidth, p.windowHeight/2);
+        cnv = p.createCanvas(p.windowWidth, p.windowHeight/2);
+        cnv.mousePressed(togglePlayPause);
         p.noStroke();
         p.frameRate(12);
         p.colorMode(p.HSB); // Max values: 360, 100, 100, 1
@@ -79,6 +80,7 @@ var p5sketch = function( p ) {
 
     function soundLoop(cycleStartTime) {
         cycleStartACtime = audioContext.currentTime;
+        synth.releaseAll();
         // Play sound
         beatSeconds = this._convertNotation('4n');
         hihat.playMode('restart');
@@ -89,8 +91,11 @@ var p5sketch = function( p ) {
         var secsPerUnit = this._convertNotation(this._interval);
         secsPerTick = secsPerUnit / (ticksPerBeat * beatsPerUnit);
 
+        inputEventsList = createArray(96, 0); // Reset the input
         compMode = $("input[name=comp_mode]:checked").val();
-        if (loopStatus == 1) {
+
+        // Play accompaniment
+        if (compMode == 'accompaniment' || loopStatus == 1) {
             for (var tick=0; tick<compEventsList.length; tick++) {
                 for (var msg_ind=0; msg_ind<compEventsList[tick].length; msg_ind++) {
                     var msg = compEventsList[tick][msg_ind];
@@ -103,20 +108,31 @@ var p5sketch = function( p ) {
                     }
                 }
             }
-            recordStatusColor = [0, 0, 20];
-        } else if (loopStatus == 0) {
-            inputEventsList = createArray(96, 0); // Reset the input
+        }
+
+        // Update status indicator
+        if (compMode == 'accompaniment' || loopStatus == 0) {
             recordStatusColor = [0, 70, 80];
+        } else {
+            recordStatusColor = [0, 0, 20];
         }
 
         loopStatus = 1 - loopStatus;
     }
 
-    p.mouseClicked = function() {
+    function togglePlayPause() {
         if (sloop.isPlaying) {
             sloop.pause();
+            clearAllKeys();
         } else {
             sloop.start();
+        }
+    }
+
+    function clearAllKeys() {
+        synth.releaseAll();
+        for (var i=0; i<keys.length; i++) {
+            keys[i].velocity = 0;
         }
     }
 
@@ -255,9 +271,15 @@ var p5sketch = function( p ) {
 
     function getCompFromServer(inputEvents) {
         // ajax the JSON to the server
-        $.post("/comp_endpoint", JSON.stringify(inputEventsList), function(data) {
-            compEventsList = JSON.parse(data);
-        });
+        if (compMode == 'call_and_response') {
+            $.post("/call_and_resp_endpoint", JSON.stringify(inputEventsList), function(data) {
+                compEventsList = JSON.parse(data);
+            }); 
+        } else if (compMode == 'accompaniment') {
+            $.post("/accompaniment_endpoint", JSON.stringify(inputEventsList), function(data) {
+                compEventsList = JSON.parse(data);
+            });
+        }
     }
 };
 

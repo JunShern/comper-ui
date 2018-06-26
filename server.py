@@ -32,16 +32,28 @@ def get_input_pianoroll():
     matrix = np_to_json(mat)
     return matrix
 
-@app.route('/comp_endpoint', methods = ['POST'])
-def get_comp_pianoroll():
+@app.route('/call_and_resp_endpoint', methods = ['POST'])
+def predict_call_and_resp():
     # Parse data into input pianoroll
     data = request.get_json(force=True)
     input_pianoroll = jsonevents_2_pianoroll(data)
     # Predict comp pianoroll
-    comp_pianoroll = unit_predictor.get_comp_pianoroll(input_pianoroll) #input_pianoroll.copy()
+    comp_pianoroll = call_and_response_predictor.get_comp_pianoroll(input_pianoroll) #input_pianoroll.copy()
     # Format data for JSON
     comp_events = pianoroll_2_jsonevents(comp_pianoroll)
     return json.dumps(comp_events)
+
+@app.route('/accompaniment_endpoint', methods = ['POST'])
+def predict_accompaniment():
+    # Parse data into input pianoroll
+    data = request.get_json(force=True)
+    input_pianoroll = jsonevents_2_pianoroll(data)
+    # Predict comp pianoroll
+    comp_pianoroll = accompaniment_predictor.get_comp_pianoroll(input_pianoroll) #input_pianoroll.copy()
+    # Format data for JSON
+    comp_events = pianoroll_2_jsonevents(comp_pianoroll)
+    return json.dumps(comp_events)
+
 
 def jsonevents_2_pianoroll(events):
     assert(len(events) == NUM_TICKS)
@@ -83,5 +95,6 @@ def pianoroll_2_jsonevents(pianoroll, min_pitch=0, max_pitch=127, is_onsets_matr
 
 if __name__ == '__main__':
     # run!
-    unit_predictor = unit_predictor.UnitVariationalAutoencoderOnsets()
+    call_and_response_predictor = unit_predictor.UnitVariationalAutoencoderOnsets()
+    accompaniment_predictor = unit_predictor.UnitAccompanierMono()
     app.run(debug=True)
